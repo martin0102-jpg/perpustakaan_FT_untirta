@@ -1,0 +1,115 @@
+/* ===== Perpustakaan Kampus - CSS manual (tanpa framework) ===== */
+:root {
+    --biru: #0B2E59;
+    --biru-gelap: #082245;
+    --kuning: #FFC72C;
+    --kuning-gelap: #E6AE12;
+    --bg: #F5F7FA;
+    --teks: #1A1A1A;
+    --abu: #5B6675;
+    --garis: #DDE2EA;
+    --hijau: #1E7B4A;
+    --merah: #B3261E;
+}
+* { box-sizing: border-box; }
+body {
+    margin: 0; min-height: 100vh; display: flex; flex-direction: column;
+    background: var(--bg); color: var(--teks);
+    font-family: "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif;
+    line-height: 1.55;
+}
+a { color: var(--biru); }
+:focus-visible { outline: 3px solid var(--kuning); outline-offset: 2px; }
+
+/* ----- Navbar ----- */
+.navbar { background: var(--biru); color: #fff; }
+.navbar-inner {
+    max-width: 1100px; margin: 0 auto; padding: 0 20px; min-height: 60px;
+    display: flex; align-items: center; flex-wrap: wrap; gap: 8px 24px;
+}
+.brand { color: #fff; font-weight: 700; font-size: 1.15rem; text-decoration: none; margin-right: 8px; }
+.nav { display: flex; flex-wrap: wrap; gap: 4px; flex: 1; }
+.nav a, .user-info a { color: #fff; text-decoration: none; padding: 8px 12px; border-radius: 4px; }
+.nav a:hover, .user-info a:hover { color: var(--kuning); }
+.nav a.aktif { color: var(--kuning); box-shadow: inset 0 -3px 0 var(--kuning); border-radius: 0; }
+.user-info { display: flex; align-items: center; gap: 8px; font-size: .9rem; }
+
+/* ----- Layout ----- */
+.container { flex: 1; width: 100%; max-width: 1100px; margin: 0 auto; padding: 28px 20px; }
+.card {
+    background: #fff; border: 1px solid var(--garis); border-radius: 8px;
+    padding: 24px; margin-bottom: 24px;
+}
+h1, h2, h3 { color: var(--biru); margin-top: 0; }
+h1 { font-size: 1.6rem; margin-bottom: 4px; }
+h2 { font-size: 1.2rem; }
+.sub { color: var(--abu); margin: 0 0 20px; }
+.footer { background: var(--biru); color: #fff; text-align: center; padding: 16px; font-size: .88rem; }
+
+/* ----- Alert ----- */
+.alert { padding: 12px 16px; border-radius: 6px; margin-bottom: 20px; border-left: 5px solid; }
+.alert-sukses { background: #E6F4EC; border-color: var(--hijau); color: #14522F; }
+.alert-error  { background: #FCE9E7; border-color: var(--merah); color: #7A1913; }
+.alert ul { margin: 0; padding-left: 18px; }
+
+/* ----- Tombol ----- */
+.btn {
+    display: inline-block; border: 0; border-radius: 6px; cursor: pointer;
+    padding: 10px 18px; font: inherit; font-weight: 600; text-decoration: none;
+    background: var(--kuning); color: var(--biru);
+}
+.btn:hover { background: var(--kuning-gelap); }
+.btn-sekunder { background: #fff; color: var(--biru); border: 1px solid var(--biru); }
+.btn-sekunder:hover { background: var(--bg); }
+.btn-bahaya { background: var(--merah); color: #fff; }
+.btn-bahaya:hover { background: #8F1E18; }
+.btn-kecil { padding: 6px 12px; font-size: .88rem; }
+form.inline { display: inline; }
+
+/* ----- Form ----- */
+.form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 16px; }
+label { display: block; font-weight: 600; margin-bottom: 4px; font-size: .92rem; }
+input[type=text], input[type=password], input[type=number], input[type=search], select {
+    width: 100%; padding: 10px 12px; font: inherit; color: var(--teks);
+    border: 1px solid #B8C0CC; border-radius: 6px; background: #fff;
+}
+input:focus, select:focus { border-color: var(--biru); }
+.cari { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+.cari input { flex: 1; min-width: 200px; }
+
+/* ----- Tabel ----- */
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: .94rem; }
+th { background: var(--biru); color: #fff; text-align: left; padding: 10px 12px; white-space: nowrap; }
+td { padding: 10px 12px; border-bottom: 1px solid var(--garis); vertical-align: top; }
+tr:hover td { background: #FAFBFD; }
+.kosong { text-align: center; color: var(--abu); padding: 28px 12px; }
+.aksi { white-space: nowrap; }
+
+/* ----- Badge & filter ----- */
+.badge { display: inline-block; padding: 2px 10px; border-radius: 99px; font-size: .8rem; font-weight: 600; }
+.badge-pending  { background: var(--kuning); color: var(--biru); }
+.badge-approved, .badge-verified { background: #D7EFE2; color: #14522F; }
+.badge-rejected { background: #F8D9D6; color: #7A1913; }
+.filter { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+.filter a { padding: 6px 14px; border: 1px solid var(--garis); border-radius: 99px; text-decoration: none; background: #fff; font-size: .9rem; }
+.filter a:hover { border-color: var(--kuning); color: var(--biru); background: #FFF7DD; }
+.filter a.aktif { background: var(--biru); color: #fff; border-color: var(--biru); }
+
+/* ----- Dashboard ----- */
+.stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+.stat { background: #fff; border: 1px solid var(--garis); border-left: 5px solid var(--kuning); border-radius: 8px; padding: 16px 20px; text-decoration: none; color: var(--teks); display: block; }
+.stat:hover { border-left-color: var(--biru); }
+.stat .angka { display: block; font-size: 2rem; font-weight: 700; color: var(--biru); line-height: 1.2; }
+.stat .label { color: var(--abu); font-size: .9rem; }
+
+/* ----- Login ----- */
+.login-box { max-width: 420px; margin: 40px auto; }
+.login-box .field { margin-bottom: 16px; }
+.login-box .btn { width: 100%; }
+
+@media (max-width: 640px) {
+    .container { padding: 16px 12px; }
+    .card { padding: 16px; }
+    .navbar-inner { padding: 8px 12px; }
+}
