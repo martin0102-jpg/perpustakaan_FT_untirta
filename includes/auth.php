@@ -3,7 +3,12 @@
 // Di-require oleh setiap halaman (juga memuat koneksi database).
 require_once __DIR__ . '/../config/db.php';
 
+// Cookie session: tidak bisa dibaca JavaScript (httponly), dan tidak ikut dikirim dari situs lain (samesite).
 if (session_status() === PHP_SESSION_NONE) {
+    session_set_cookie_params([
+        'lifetime' => 0, 'path' => '/', 'httponly' => true,
+        'samesite' => 'Lax', 'secure' => !empty($_SERVER['HTTPS']),
+    ]);
     session_start();
 }
 
@@ -66,6 +71,14 @@ function ambil_flash(): ?array {
     return $f;
 }
 
+// ----- Helper teks (tidak butuh ekstensi mbstring, jadi aman di hosting mana pun) -----
+function teks_panjang(string $s): int {
+    return (int)preg_match_all('/./us', $s);
+}
+function teks_awal(string $s): string {
+    return preg_match('/./us', $s, $m) ? strtoupper($m[0]) : '?';
+}
+
 // ----- Helper tampilan -----
 function tgl(?string $tanggal): string {
     return $tanggal ? date('d/m/Y', strtotime($tanggal)) : '-';
@@ -90,4 +103,17 @@ function filter_status(string $aktif, array $opsi): void {
 function status_filter(array $diizinkan): string {
     $s = $_GET['status'] ?? '';
     return in_array($s, $diizinkan, true) ? $s : '';
+}
+
+// ----- Pembatas percobaan login: 5 kali salah -> tunggu 60 detik -----
+function login_sisa_kunci(): int {
+    $sampai = $_SESSION['login_kunci'] ?? 0;
+    return $sampai > time() ? $sampai - time() : 0;
+}
+function login_gagal(): void {
+    $_SESSION['login_gagal'] = ($_SESSION['login_gagal'] ?? 0) + 1;
+    if ($_SESSION['login_gagal'] >= 5) {
+        $_SESSION['login_kunci'] = time() + 60;
+        $_SESSION['login_gagal'] = 0;
+    }
 }

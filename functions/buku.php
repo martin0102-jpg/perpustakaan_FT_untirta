@@ -64,7 +64,16 @@ function buku_hapus(mysqli $conn, int $id): bool {
     if (buku_punya_riwayat($conn, $id)) {
         return false;
     }
-    return db_run($conn, "DELETE FROM buku WHERE id = ?", 'i', [$id]) > 0;
+    try {
+        return db_run($conn, "DELETE FROM buku WHERE id = ?", 'i', [$id]) > 0;
+    } catch (mysqli_sql_exception $e) {
+        return false; // ditolak foreign key (ada peminjaman yang masuk bersamaan)
+    }
+}
+
+// Buku terbaru untuk halaman depan. LIMIT dipaksa integer agar aman.
+function buku_terbaru(mysqli $conn, int $n = 4): array {
+    return db_all($conn, "SELECT judul, penulis, tahun, stok FROM buku ORDER BY id DESC LIMIT ?", 'i', [$n]);
 }
 
 function buku_hitung(mysqli $conn): int {

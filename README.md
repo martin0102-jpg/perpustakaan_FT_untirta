@@ -1,47 +1,58 @@
-# Website Perpustakaan Kampus (PHP Native + MySQL)
+# Perpus FT Untirta (PHP Native + MySQL)
 
 Project mata kuliah Sistem Basis Data.
 
-## Akun contoh (dari database.sql)
-| Role | Username / NIM | Password |
-|---|---|---|
-| Admin | `admin` | `admin123` |
-| Mahasiswa | `3337220001` | `mahasiswa123` |
-| Mahasiswa | `3337220002` | `mahasiswa123` |
+## Isi paket
+- `database.sql` : struktur tabel + data contoh (untuk demo/presentasi).
+- `database-bersih.sql` : struktur tabel + 1 akun admin saja (untuk dipakai sungguhan).
+- Kedua file TIDAK membuat database; buat database kosong dulu, pilih, lalu Import.
+  Tabel lama bernama sama akan dihapus dan dibuat ulang.
 
-Ganti password setelah deploy.
+## Akun awal
+| Role | Username / NIM | Password | Ada di |
+|---|---|---|---|
+| Admin | `admin` | `admin123` | kedua file |
+| Mahasiswa | `3337220001`, `3337220002` | `mahasiswa123` | hanya `database.sql` |
+
+**Ganti password admin setelah deploy:**
+1. Di komputer (XAMPP), buka Command Prompt: `C:\xampp\php\php.exe -r "echo password_hash('PasswordBaruAnda', PASSWORD_DEFAULT);"`
+2. Salin hasilnya (diawali `$2y$10$`), lalu di phpMyAdmin tab SQL jalankan:
+   `UPDATE users SET password = 'HASIL_TADI' WHERE username = 'admin';`
 
 ## Menjalankan di XAMPP
 1. Salin folder `perpustakaan` ke `C:\xampp\htdocs\`.
-2. Start Apache + MySQL, buka `http://localhost/phpmyadmin`, tab **Import**, pilih `database.sql`.
-3. `config/db.php` sudah cocok untuk XAMPP (user `root`, password kosong, `BASE_URL` = `/perpustakaan`).
-4. Buka `http://localhost/perpustakaan`.
+2. Start Apache + MySQL. Buka `http://localhost/phpmyadmin`, buat database `perpus_ft_untirta`
+   (collation `utf8mb4_unicode_ci`), pilih database itu, tab **Import**, pilih `database.sql`.
+3. `config/db.php` sudah cocok untuk XAMPP. Buka `http://localhost/perpustakaan`.
 
-## Deploy ke InfinityFree
-1. Panel hosting -> **MySQL Databases** -> buat database. Catat host (`sqlXXX.infinityfree.com`), user (`if0_...`), nama database.
-2. Buka phpMyAdmin dari panel, pilih database tadi, **Import** `database.sql`.
-   Hapus dulu dua baris `CREATE DATABASE ...` dan `USE perpustakaan;` di file SQL (InfinityFree tidak mengizinkan membuat database lewat SQL).
-3. Edit `config/db.php`: isi `$DB_HOST`, `$DB_USER`, `$DB_PASS`, `$DB_NAME`, dan ubah `BASE_URL` menjadi `''` (jika diletakkan langsung di `htdocs`).
-4. Upload semua isi folder ke `htdocs/` lewat File Manager atau FTP.
+## Deploy ke InfinityFree (akun / domain baru)
+1. Daftar di infinityfree.com, buat hosting account (pilih subdomain gratis atau domain sendiri).
+2. Client Area -> **MySQL Databases** -> buat database. Catat: MySQL Host Name (`sqlXXX.infinityfree.com`),
+   MySQL User Name (`if0_XXXXXXXX`), dan nama database lengkap (`if0_XXXXXXXX_namaanda`).
+   Password MySQL = password akun hosting (vPanel).
+3. Klik **phpMyAdmin** di database itu, tab **Import**, pilih `database-bersih.sql` (atau `database.sql` untuk demo).
+4. Edit `config/db.php`: isi `$DB_HOST`, `$DB_USER`, `$DB_PASS`, `$DB_NAME`, dan set `BASE_URL` menjadi `''` (kosong).
+5. Upload ISI folder `perpustakaan/` ke folder `htdocs/` (FileZilla/FTP, data ada di menu FTP Details).
+6. Buka website, uji daftar + login, lalu ganti password admin.
 
 ## Alasan keputusan teknis (untuk dosen)
 | Keputusan | Alasan |
 |---|---|
-| Prepared statement di semua query | Mencegah SQL injection; data user tidak pernah digabung langsung ke string SQL. |
-| `password_hash` / `password_verify` | Password tidak disimpan polos; bcrypt otomatis memakai salt dan lambat disengaja agar sulit di-brute-force. |
-| Satu tabel `users` dengan kolom `role` | Admin dan mahasiswa punya data login yang sama; cukup dibedakan role. Menghindari tabel ganda. |
-| Tabel `pengembalian` terpisah + `UNIQUE(peminjaman_id)` | Relasi 1:1 peminjaman-pengembalian dijaga oleh database, bukan hanya oleh kode PHP. |
-| Stok berubah hanya saat APPROVE, dalam transaksi | Status dan stok harus berubah bersamaan (atomik). Jika gagal di tengah, `rollback` membatalkan semuanya. |
-| `SELECT ... FOR UPDATE` | Mengunci baris agar dua petugas yang menekan Setujui bersamaan tidak mengurangi stok dua kali. |
-| `UPDATE ... WHERE stok > 0` + `CHECK (stok >= 0)` | Stok tidak mungkin negatif, dijaga di kode dan di database. |
-| FK `peminjaman.buku_id` (RESTRICT) | Buku yang sudah punya riwayat tidak bisa terhapus. Aturan ini dijaga di aplikasi dan di database. |
-| Aturan 1 pending per mahasiswa | Dicek di `peminjaman_ajukan()` sebelum INSERT; peminjaman approved boleh banyak. |
-| Pengembalian ditolak diajukan ulang | Karena `UNIQUE`, baris lama yang rejected dipakai ulang dan dikembalikan ke pending, bukan membuat baris baru. |
-| `user_id` diambil dari `$_SESSION` | Mahasiswa tidak bisa memalsukan identitas lewat form. |
-| `session_regenerate_id` saat login | Mencegah session fixation. |
-| Token CSRF di semua form POST | Mencegah form dikirim dari situs lain atas nama user yang sedang login. |
-| `htmlspecialchars` (fungsi `e()`) | Mencegah XSS saat menampilkan data. |
-| Pola Post-Redirect-Get + flash message | Refresh halaman tidak mengirim ulang form (mencegah dobel submit). |
-| Query di `functions/`, tampilan di halaman | Pemisahan logic dan tampilan: lebih mudah dibaca dan diuji. |
-| Tanggal dari PHP (`date()`), bukan `NOW()` MySQL | Zona waktu konsisten (Asia/Jakarta) di XAMPP maupun hosting. |
-| Satu kunjungan per hari (tambahan) | Mencegah spam pengisian kunjungan; bisa dihapus di `kunjungan_tambah()` jika tidak diinginkan. |
+| Prepared statement di semua query | Mencegah SQL injection. |
+| `password_hash` / `password_verify` | Password tidak disimpan polos; bcrypt memakai salt dan sengaja lambat. |
+| Satu tabel `users` + kolom `role` | Admin dan mahasiswa punya data login yang sama; dibedakan role. |
+| Tabel `pengembalian` terpisah + `UNIQUE(peminjaman_id)` | Relasi 1:1 dijaga database, bukan hanya PHP. |
+| Stok berubah hanya saat APPROVE, dalam transaksi | Status dan stok berubah bersamaan; gagal di tengah = rollback. |
+| `SELECT ... FOR UPDATE` | Dua petugas menyetujui bersamaan tidak mengurangi stok dua kali. |
+| `WHERE stok > 0` + `CHECK (stok >= 0)` | Stok tidak mungkin negatif (kode dan database). |
+| FK `peminjaman.buku_id` (RESTRICT) | Buku beriwayat tidak bisa terhapus. |
+| `UNIQUE(user_id, tanggal)` di `kunjungan` | Satu kunjungan per hari dijaga database, tahan klik ganda. |
+| Pengembalian ditolak diajukan ulang dengan memakai ulang baris lama | Karena UNIQUE, tidak boleh ada baris kedua. |
+| `user_id` dari `$_SESSION`, role registrasi di-hardcode | Identitas dan role tidak bisa dipalsukan lewat form. |
+| `session_regenerate_id`, cookie httponly + samesite | Mencegah session fixation dan pencurian cookie. |
+| Token CSRF di semua form POST | Mencegah form dikirim dari situs lain. |
+| Pembatas login (5 salah = tunggu 60 detik) | Memperlambat tebak password. |
+| `htmlspecialchars` (fungsi `e()`) | Mencegah XSS. |
+| Post-Redirect-Get + flash message | Refresh tidak mengirim ulang form. |
+| Query di `functions/`, tampilan di halaman | Pemisahan logic dan tampilan. |
+| Tanggal dari PHP `date()` (Asia/Jakarta) | Zona waktu konsisten di XAMPP maupun hosting. |

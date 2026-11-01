@@ -10,11 +10,10 @@ $pending = peminjaman_punya_pending($conn, $uid);
 $judul = 'Dashboard Mahasiswa';
 require __DIR__ . '/../includes/header.php';
 ?>
-<h1>Halo, <?= e($_SESSION['user']['nama']) ?></h1>
-<p class="sub">NIM <?= e($_SESSION['user']['username']) ?></p>
+<div class="banner"><h1>Halo, <?= e($_SESSION['user']['nama']) ?> 👋</h1><p>NIM <?= e($_SESSION['user']['username']) ?></p></div>
 <div class="stat-grid">
-    <a class="stat" href="peminjaman.php"><span class="angka"><?= $aktif ?></span><span class="label">Buku sedang dipinjam</span></a>
-    <a class="stat" href="peminjaman.php"><span class="angka"><?= $pending ? 1 : 0 ?></span><span class="label">Pengajuan pinjam menunggu persetujuan</span></a>
+    <a class="stat" href="pengembalian.php"><span class="ikon">📖</span><span><span class="angka"><?= $aktif ?></span><span class="label">Buku sedang dipinjam</span></span></a>
+    <a class="stat" href="peminjaman.php"><span class="ikon">🕘</span><span><span class="angka"><?= $pending ? 1 : 0 ?></span><span class="label">Pengajuan pinjam menunggu</span></span></a>
 </div>
 <div class="card">
     <h2>Menu cepat</h2>

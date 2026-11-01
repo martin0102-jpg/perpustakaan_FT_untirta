@@ -9,9 +9,14 @@ function kunjungan_tambah(mysqli $conn, int $userId): array {
     if ($sudah) {
         return [false, 'Anda sudah mengisi kunjungan hari ini.'];
     }
-    db_run($conn,
-        "INSERT INTO kunjungan (user_id, tanggal, jam_submit, status) VALUES (?, ?, ?, 'pending')",
-        'iss', [$userId, $hariIni, date('H:i:s')]);
+    try {
+        db_run($conn,
+            "INSERT INTO kunjungan (user_id, tanggal, jam_submit, status) VALUES (?, ?, ?, 'pending')",
+            'iss', [$userId, $hariIni, date('H:i:s')]);
+    } catch (mysqli_sql_exception $e) {
+        // UNIQUE (user_id, tanggal) menolak klik ganda bersamaan.
+        return [false, 'Anda sudah mengisi kunjungan hari ini.'];
+    }
     return [true, 'Kunjungan berhasil dikirim, menunggu verifikasi petugas.'];
 }
 
