@@ -13,9 +13,15 @@ if ($u) {
     $menu = [
         $prefix . 'dashboard.php'    => ['Dashboard', 'dashboard.php'],
         $prefix . 'buku.php'         => ['Buku', 'buku.php'],
+    ];
+    if ($u['role'] === 'admin') {
+        $menu[$prefix . 'mahasiswa.php'] = ['Mahasiswa', 'mahasiswa.php']; // kelola akun & reset password
+    }
+    $menu += [
         $prefix . 'kunjungan.php'    => ['Kunjungan', 'kunjungan.php'],
         $prefix . 'peminjaman.php'   => ['Peminjaman', 'peminjaman.php'],
         $prefix . 'pengembalian.php' => ['Pengembalian', 'pengembalian.php'],
+        $prefix . 'peringkat.php'    => ['Peringkat', 'peringkat.php'],
     ];
 } else {
     $menu = [
@@ -57,6 +63,7 @@ if ($u) {
                 <div class="dropdown" id="user-menu">
                     <div class="info"><strong><?= e($u['nama']) ?></strong><?= e($u['username']) ?> &middot; <?= e($u['role']) ?></div>
                     <a href="<?= BASE_URL . '/' . e($u['role']) ?>/dashboard.php">Dashboard</a>
+                    <a href="<?= BASE_URL . '/' . e($u['role']) ?>/akun.php">Akun &amp; ganti password</a>
                     <a href="<?= BASE_URL ?>/logout.php">Keluar</a>
                 </div>
             </div>
