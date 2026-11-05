@@ -16,21 +16,26 @@ require __DIR__ . '/../includes/header.php';
         <input type="search" name="cari" placeholder="Cari judul, penulis, atau ISBN" value="<?= e($cari) ?>">
         <button class="btn btn-sekunder" type="submit">Cari</button>
     </form>
-    <div class="table-wrap">
-    <table>
-        <thead><tr><th>Judul</th><th>Penulis</th><th>Penerbit</th><th>Tahun</th><th>ISBN</th><th>Stok</th><th></th></tr></thead>
-        <tbody>
-        <?php if (!$daftar): ?><tr><td colspan="7" class="kosong">Buku tidak ditemukan.</td></tr><?php endif; ?>
-        <?php foreach ($daftar as $b): ?>
-            <tr>
-                <td><?= e($b['judul']) ?></td><td><?= e($b['penulis']) ?></td><td><?= e($b['penerbit']) ?></td>
-                <td><?= e($b['tahun']) ?></td><td><?= e($b['isbn']) ?></td>
-                <td><?= (int)$b['stok'] > 0 ? e($b['stok']) : '<span class="badge badge-rejected">Habis</span>' ?></td>
-                <td class="aksi"><?php if ((int)$b['stok'] > 0): ?><a class="btn btn-kecil" href="peminjaman.php?buku=<?= (int)$b['id'] ?>">Pinjam</a><?php endif; ?></td>
-            </tr>
-        <?php endforeach; ?>
-        </tbody>
-    </table>
+    <?php if (!$daftar): ?><p class="kosong">Buku tidak ditemukan.</p><?php endif; ?>
+    <div class="grid-4 katalog">
+    <?php foreach ($daftar as $b): $url = buku_gambar_url($b['gambar'] ?? null); ?>
+        <div class="buku-card">
+            <div class="sampul">
+                <?php if ($url): ?><img src="<?= e($url) ?>" alt="Cover <?= e($b['judul']) ?>" loading="lazy">
+                <?php else: ?><?= e(teks_awal($b['judul'])) ?><?php endif; ?>
+            </div>
+            <div class="isi">
+                <h3><?= e($b['judul']) ?></h3>
+                <p class="penulis"><?= e($b['penulis']) ?> &middot; <?= e($b['tahun']) ?></p>
+                <?php if ((int)$b['stok'] > 0): ?>
+                    <span class="badge badge-approved">Stok <?= (int)$b['stok'] ?></span>
+                    <a class="btn btn-kecil" href="peminjaman.php?buku=<?= (int)$b['id'] ?>">Pinjam</a>
+                <?php else: ?>
+                    <span class="badge badge-rejected">Habis</span>
+                <?php endif; ?>
+            </div>
+        </div>
+    <?php endforeach; ?>
     </div>
 </div>
 <?php require __DIR__ . '/../includes/footer.php'; ?>
