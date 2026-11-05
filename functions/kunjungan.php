@@ -51,3 +51,24 @@ function kunjungan_proses(mysqli $conn, int $id, string $status, int $adminId): 
 function kunjungan_hitung_pending(mysqli $conn): int {
     return (int)db_one($conn, "SELECT COUNT(*) AS n FROM kunjungan WHERE status = 'pending'")['n'];
 }
+
+// ===== Peringkat kunjungan per bulan =====
+// Hanya kunjungan berstatus 'verified' yang dihitung (anti-curang: harus diverifikasi petugas).
+// Jika jumlah sama, yang LEBIH DULU mencapai jumlah itu (kunjungan terakhirnya lebih awal) menang.
+// $bulan berformat 'YYYY-MM'. Mengembalikan semua baris berperingkat 1..n.
+function kunjungan_peringkat(mysqli $conn, string $bulan): array {
+    $awal  = $bulan . '-01';
+    $akhir = date('Y-m-d', strtotime($awal . ' +1 month')); // batas atas (tidak ikut)
+    $baris = db_all($conn,
+        "SELECT u.id, u.nama, u.username, COUNT(*) AS jumlah,
+                MAX(CONCAT(k.tanggal, ' ', k.jam_submit)) AS terakhir
+         FROM kunjungan k JOIN users u ON u.id = k.user_id
+         WHERE k.status = 'verified' AND k.tanggal >= ? AND k.tanggal < ?
+         GROUP BY u.id, u.nama, u.username
+         ORDER BY jumlah DESC, terakhir ASC",
+        'ss', [$awal, $akhir]);
+    foreach ($baris as $i => &$b) {
+        $b['peringkat'] = $i + 1;
+    }
+    return $baris;
+}
