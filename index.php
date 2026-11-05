@@ -64,7 +64,10 @@ require __DIR__ . '/includes/header.php';
     <div class="grid-4">
     <?php foreach ($terbaru as $b): ?>
         <div class="buku-card">
-            <div class="sampul"><?= e(teks_awal($b['judul'])) ?></div>
+            <div class="sampul">
+                <?php if ($url = buku_gambar_url($b['gambar'] ?? null)): ?><img src="<?= e($url) ?>" alt="Cover <?= e($b['judul']) ?>" loading="lazy">
+                <?php else: ?><?= e(teks_awal($b['judul'])) ?><?php endif; ?>
+            </div>
             <div class="isi">
                 <h3><?= e($b['judul']) ?></h3>
                 <p class="penulis"><?= e($b['penulis']) ?> &middot; <?= e($b['tahun']) ?></p>
