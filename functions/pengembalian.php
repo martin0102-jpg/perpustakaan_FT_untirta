@@ -5,7 +5,7 @@
 // sudah approved, dan belum punya pengembalian (atau pengembaliannya pernah ditolak).
 function pengembalian_bisa_diajukan(mysqli $conn, int $userId): array {
     return db_all($conn,
-        "SELECT p.id, p.tanggal_pinjam, b.judul, pg.status AS status_kembali
+        "SELECT p.id, p.tanggal_pinjam, p.tanggal_jatuh_tempo, b.judul, pg.status AS status_kembali
          FROM peminjaman p
          JOIN buku b ON b.id = p.buku_id
          LEFT JOIN pengembalian pg ON pg.peminjaman_id = p.id
@@ -47,7 +47,7 @@ function pengembalian_ajukan(mysqli $conn, int $userId, int $peminjamanId): arra
 // Riwayat pengembalian milik mahasiswa.
 function pengembalian_riwayat(mysqli $conn, int $userId): array {
     return db_all($conn,
-        "SELECT pg.*, b.judul, p.tanggal_pinjam
+        "SELECT pg.*, b.judul, p.tanggal_pinjam, p.tanggal_jatuh_tempo
          FROM pengembalian pg
          JOIN peminjaman p ON p.id = pg.peminjaman_id
          JOIN buku b ON b.id = p.buku_id
@@ -56,7 +56,7 @@ function pengembalian_riwayat(mysqli $conn, int $userId): array {
 
 // Semua pengembalian (admin), filter status opsional.
 function pengembalian_semua(mysqli $conn, string $status = ''): array {
-    $sql = "SELECT pg.*, p.tanggal_pinjam, u.nama, u.username AS nim, b.judul, a.nama AS nama_petugas
+    $sql = "SELECT pg.*, p.tanggal_pinjam, p.tanggal_jatuh_tempo, u.nama, u.username AS nim, b.judul, a.nama AS nama_petugas
             FROM pengembalian pg
             JOIN peminjaman p ON p.id = pg.peminjaman_id
             JOIN users u ON u.id = p.user_id
@@ -73,19 +73,22 @@ function pengembalian_approve(mysqli $conn, int $id, int $adminId): array {
     mysqli_begin_transaction($conn);
     try {
         $pg = db_one($conn,
-            "SELECT pg.id, pg.status, p.buku_id
+            "SELECT pg.id, pg.status, pg.tanggal_kembali, p.buku_id, p.tanggal_jatuh_tempo
              FROM pengembalian pg JOIN peminjaman p ON p.id = pg.peminjaman_id
              WHERE pg.id = ? FOR UPDATE", 'i', [$id]);
         if (!$pg || $pg['status'] !== 'pending') {
             mysqli_rollback($conn);
             return [false, 'Pengembalian tidak ditemukan atau sudah diproses.'];
         }
+        // Denda dihitung sampai tanggal PENGAJUAN pengembalian lalu dibekukan (tidak berubah lagi).
+        $hari  = hari_terlambat($pg['tanggal_jatuh_tempo'], $pg['tanggal_kembali']);
+        $denda = hitung_denda($hari);
         db_run($conn, "UPDATE buku SET stok = stok + 1 WHERE id = ?", 'i', [$pg['buku_id']]);
         db_run($conn,
-            "UPDATE pengembalian SET status = 'approved', approved_by = ?, approved_at = ? WHERE id = ?",
-            'isi', [$adminId, date('Y-m-d H:i:s'), $id]);
+            "UPDATE pengembalian SET status = 'approved', approved_by = ?, approved_at = ?, hari_terlambat = ?, denda = ? WHERE id = ?",
+            'isiii', [$adminId, date('Y-m-d H:i:s'), $hari, $denda, $id]);
         mysqli_commit($conn);
-        return [true, 'Pengembalian disetujui, stok buku bertambah 1.'];
+        return [true, 'Pengembalian disetujui, stok bertambah 1.' . ($denda > 0 ? ' Terlambat ' . $hari . ' hari, denda ' . rupiah($denda) . '.' : ' Tepat waktu, tanpa denda.')];
     } catch (Throwable $e) {
         mysqli_rollback($conn);
         return [false, 'Terjadi kesalahan saat memproses pengembalian.'];
