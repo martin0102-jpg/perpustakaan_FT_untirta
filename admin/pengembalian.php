@@ -29,13 +29,20 @@ require __DIR__ . '/../includes/header.php';
     <?php filter_status($filter, ['pending' => 'Menunggu', 'approved' => 'Disetujui', 'rejected' => 'Ditolak']); ?>
     <div class="table-wrap">
     <table>
-        <thead><tr><th>Tgl pinjam</th><th>Tgl kembali</th><th>NIM</th><th>Nama</th><th>Buku</th><th>Status</th><th>Diproses oleh</th><th>Aksi</th></tr></thead>
+        <thead><tr><th>Tgl pinjam</th><th>Tgl kembali</th><th>NIM</th><th>Nama</th><th>Buku</th><th>Jatuh tempo</th><th>Terlambat</th><th>Denda</th><th>Status</th><th>Diproses oleh</th><th>Aksi</th></tr></thead>
         <tbody>
-        <?php if (!$daftar): ?><tr><td colspan="8" class="kosong">Tidak ada data pengembalian.</td></tr><?php endif; ?>
-        <?php foreach ($daftar as $r): ?>
+        <?php if (!$daftar): ?><tr><td colspan="11" class="kosong">Tidak ada data pengembalian.</td></tr><?php endif; ?>
+        <?php foreach ($daftar as $r):
+            // Disetujui: pakai nilai yang sudah dibekukan. Menunggu: perkiraan sampai tanggal pengajuan.
+            $hari  = $r['status'] === 'approved' ? (int)$r['hari_terlambat'] : hari_terlambat($r['tanggal_jatuh_tempo'], $r['tanggal_kembali']);
+            $denda = $r['status'] === 'approved' ? (int)$r['denda'] : hitung_denda($hari);
+            $tampil = $r['status'] !== 'rejected'; ?>
             <tr>
                 <td><?= tgl($r['tanggal_pinjam']) ?></td><td><?= tgl($r['tanggal_kembali']) ?></td>
                 <td><?= e($r['nim']) ?></td><td><?= e($r['nama']) ?></td><td><?= e($r['judul']) ?></td>
+                <td><?= tgl($r['tanggal_jatuh_tempo'] ?? null) ?></td>
+                <td><?= $tampil ? ($hari > 0 ? '<span class="badge badge-rejected">' . $hari . ' hari</span>' : 'Tepat waktu') : '-' ?></td>
+                <td><?= $tampil && $denda > 0 ? '<strong>' . e(rupiah($denda)) . '</strong>' : '-' ?></td>
                 <td><?= badge($r['status']) ?></td><td><?= e($r['nama_petugas'] ?? '-') ?></td>
                 <td class="aksi">
                 <?php if ($r['status'] === 'pending'): ?>
