@@ -56,11 +56,16 @@
         var kartu = inp.closest('.card');
         inp.addEventListener('input', function () {
             var q = inp.value.toLowerCase();
-            kartu.querySelectorAll('tbody tr').forEach(function (tr) {
-                if (tr.querySelector('.kosong')) return;
-                tr.style.display = tr.textContent.toLowerCase().indexOf(q) > -1 ? '' : 'none';
+            kartu.querySelectorAll('tbody tr, .buku-card').forEach(function (el) {
+                if (el.querySelector('.kosong')) return;
+                el.style.display = el.textContent.toLowerCase().indexOf(q) > -1 ? '' : 'none';
             });
         });
+    });
+
+    // 6b. Pilihan (select) bertanda data-auto-submit langsung mengirim form saat diganti
+    d.querySelectorAll('select[data-auto-submit]').forEach(function (sel) {
+        sel.addEventListener('change', function () { sel.form.submit(); });
     });
 
     // 7. Pesan notifikasi: tombol tutup + hilang otomatis (khusus pesan sukses)
