@@ -1,7 +1,8 @@
 -- =====================================================================
--- Database Perpus FT Untirta  (VERSI BERSIH untuk produksi)
--- Isi: struktur tabel + 1 akun admin. Tanpa mahasiswa/buku contoh.
+-- Database Perpus FT Untirta  (VERSI LENGKAP + DATA CONTOH)
 -- Cara pakai: pilih database di phpMyAdmin -> tab Import -> pilih file ini.
+-- File ini TIDAK membuat database (hosting seperti InfinityFree tidak
+-- mengizinkannya); buat database kosong dulu lewat panel hosting.
 -- PERINGATAN: tabel lama bernama sama akan DIHAPUS lalu dibuat ulang.
 -- =====================================================================
 
@@ -15,7 +16,8 @@ CREATE TABLE users (
     nama      VARCHAR(100) NOT NULL,
     username  VARCHAR(50)  NOT NULL UNIQUE,          -- NIM (mahasiswa) atau username (admin)
     password  VARCHAR(255) NOT NULL,                 -- hasil password_hash()
-    role      ENUM('admin','mahasiswa') NOT NULL DEFAULT 'mahasiswa'
+    role      ENUM('admin','mahasiswa') NOT NULL DEFAULT 'mahasiswa',
+    wajib_ganti_password TINYINT(1) NOT NULL DEFAULT 0   -- 1 = harus ganti password (setelah direset petugas)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE buku (
@@ -26,6 +28,7 @@ CREATE TABLE buku (
     tahun     SMALLINT     NOT NULL,
     isbn      VARCHAR(20)  NOT NULL DEFAULT '',
     stok      INT          NOT NULL DEFAULT 0,
+    gambar    VARCHAR(255) NULL,                 -- nama file cover (folder assets/uploads/buku)
     CONSTRAINT chk_stok CHECK (stok >= 0)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -40,7 +43,7 @@ CREATE TABLE kunjungan (
     FOREIGN KEY (user_id)     REFERENCES users(id),
     FOREIGN KEY (verified_by) REFERENCES users(id) ON DELETE SET NULL,
     UNIQUE KEY uq_kunjungan_hari (user_id, tanggal),  -- satu kunjungan per mahasiswa per hari
-    INDEX idx_kunjungan_status (status)
+    INDEX idx_kunjungan_status_tgl (status, tanggal)  -- mempercepat peringkat bulanan
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE peminjaman (
@@ -48,6 +51,7 @@ CREATE TABLE peminjaman (
     user_id        INT  NOT NULL,
     buku_id        INT  NOT NULL,
     tanggal_pinjam DATE NOT NULL,
+    tanggal_jatuh_tempo DATE NULL,                   -- diisi saat peminjaman disetujui
     status         ENUM('pending','approved','rejected') NOT NULL DEFAULT 'pending',
     approved_by    INT  NULL,
     approved_at    DATETIME NULL,
@@ -55,6 +59,7 @@ CREATE TABLE peminjaman (
     FOREIGN KEY (buku_id)     REFERENCES buku(id),   -- RESTRICT: buku beriwayat tidak bisa dihapus
     FOREIGN KEY (approved_by) REFERENCES users(id) ON DELETE SET NULL,
     INDEX idx_peminjaman_status (status),
+    INDEX idx_peminjaman_jatuh_tempo (status, tanggal_jatuh_tempo),
     INDEX idx_peminjaman_user (user_id, status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -62,6 +67,8 @@ CREATE TABLE pengembalian (
     id              INT AUTO_INCREMENT PRIMARY KEY,
     peminjaman_id   INT  NOT NULL UNIQUE,            -- satu peminjaman = satu pengembalian
     tanggal_kembali DATE NOT NULL,
+    hari_terlambat  INT  NOT NULL DEFAULT 0,         -- dibekukan saat pengembalian disetujui
+    denda           INT  NOT NULL DEFAULT 0,         -- dalam Rupiah, dibekukan saat disetujui
     status          ENUM('pending','approved','rejected') NOT NULL DEFAULT 'pending',
     approved_by     INT  NULL,
     approved_at     DATETIME NULL,
@@ -70,6 +77,17 @@ CREATE TABLE pengembalian (
     INDEX idx_pengembalian_status (status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Admin awal: username admin / password admin123  -> WAJIB diganti segera (lihat README).
+-- ===== Data contoh (untuk demo / presentasi) =====
+-- Admin     : username admin      / password admin123
+-- Mahasiswa : NIM 3337220001      / password mahasiswa123  (juga 3337220002)
+-- GANTI password admin setelah deploy (lihat README).
 INSERT INTO users (nama, username, password, role) VALUES
-('Petugas Perpustakaan', 'admin', '$2y$10$y3aIbsOwsGO2KVaFf/PNFeB7y0RMIu4lglDlUhF54iMJ8eyTodyn2', 'admin');
+('Petugas Perpustakaan', 'admin',      '$2y$10$y3aIbsOwsGO2KVaFf/PNFeB7y0RMIu4lglDlUhF54iMJ8eyTodyn2', 'admin'),
+('Andi Pratama',         '3337220001', '$2y$10$JUe1Mxm2Z2JYSLF.yFSEl.o69R1zCJDXVL8YBQln/TdOpPz8WsW8u', 'mahasiswa'),
+('Siti Rahmawati',       '3337220002', '$2y$10$JUe1Mxm2Z2JYSLF.yFSEl.o69R1zCJDXVL8YBQln/TdOpPz8WsW8u', 'mahasiswa');
+
+INSERT INTO buku (judul, penulis, penerbit, tahun, isbn, stok) VALUES
+('Sistem Basis Data',            'Abraham Silberschatz', 'McGraw-Hill', 2019, '9781260084504', 5),
+('Dasar-Dasar Pemrograman Web',  'Budi Raharjo',         'Informatika', 2020, '9786026231234', 3),
+('Algoritma dan Struktur Data',  'Rinaldi Munir',        'Informatika', 2018, '9786026231111', 4),
+('Jaringan Komputer',            'Andrew Tanenbaum',     'Pearson',     2021, '9780132126953', 2);
