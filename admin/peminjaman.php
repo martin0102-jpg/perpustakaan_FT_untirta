@@ -17,26 +17,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     redirect('admin/peminjaman.php' . (!empty($_POST['kembali']) ? '?status=' . urlencode($_POST['kembali']) : ''));
 }
 
-$filter = status_filter(['pending', 'approved', 'rejected']);
+$filter = status_filter(['pending', 'approved', 'rejected', 'terlambat']);
 $daftar = peminjaman_semua($conn, $filter);
 
 $judul = 'Persetujuan Peminjaman';
 require __DIR__ . '/../includes/header.php';
 ?>
 <h1>Persetujuan Peminjaman</h1>
-<p class="sub">Stok buku berkurang saat Anda menyetujui peminjaman.</p>
+<p class="sub">Stok buku berkurang saat Anda menyetujui peminjaman. Batas pinjam <?= LAMA_PINJAM_HARI ?> hari, denda <?= rupiah(DENDA_PER_HARI) ?>/hari.</p>
 <div class="card">
-    <?php filter_status($filter, ['pending' => 'Menunggu', 'approved' => 'Disetujui', 'rejected' => 'Ditolak']); ?>
+    <?php filter_status($filter, ['pending' => 'Menunggu', 'approved' => 'Disetujui', 'rejected' => 'Ditolak', 'terlambat' => 'Terlambat']); ?>
     <div class="table-wrap">
     <table>
-        <thead><tr><th>Tgl pinjam</th><th>NIM</th><th>Nama</th><th>Buku</th><th>Stok saat ini</th><th>Status</th><th>Diproses oleh</th><th>Aksi</th></tr></thead>
+        <thead><tr><th>Tgl pinjam</th><th>NIM</th><th>Nama</th><th>Buku</th><th>Stok saat ini</th><th>Jatuh tempo</th><th>Status</th><th>Keterangan</th><th>Diproses oleh</th><th>Aksi</th></tr></thead>
         <tbody>
-        <?php if (!$daftar): ?><tr><td colspan="8" class="kosong">Tidak ada data peminjaman.</td></tr><?php endif; ?>
+        <?php if (!$daftar): ?><tr><td colspan="10" class="kosong">Tidak ada data peminjaman.</td></tr><?php endif; ?>
         <?php foreach ($daftar as $p): ?>
             <tr>
                 <td><?= tgl($p['tanggal_pinjam']) ?></td><td><?= e($p['nim']) ?></td><td><?= e($p['nama']) ?></td>
-                <td><?= e($p['judul']) ?></td><td><?= e($p['stok']) ?></td>
-                <td><?= badge($p['status']) ?></td><td><?= e($p['nama_petugas'] ?? '-') ?></td>
+                <td><?= e($p['judul']) ?></td><td><?= e($p['stok']) ?></td><td><?= tgl($p['tanggal_jatuh_tempo'] ?? null) ?></td>
+                <td><?= badge($p['status']) ?></td><td><?= peminjaman_keterangan($p) ?></td><td><?= e($p['nama_petugas'] ?? '-') ?></td>
                 <td class="aksi">
                 <?php if ($p['status'] === 'pending'): ?>
                     <?php foreach (['approve' => ['Setujui', ''], 'reject' => ['Tolak', ' btn-bahaya']] as $aksi => [$label, $kelas]): ?>
