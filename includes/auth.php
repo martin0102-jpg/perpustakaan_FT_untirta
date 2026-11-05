@@ -2,6 +2,7 @@
 // ===== Autentikasi, session, dan helper umum =====
 // Di-require oleh setiap halaman (juga memuat koneksi database).
 require_once __DIR__ . '/../config/db.php';
+require_once __DIR__ . '/../config/aturan.php';
 
 // Cookie session: tidak bisa dibaca JavaScript (httponly), dan tidak ikut dikirim dari situs lain (samesite).
 if (session_status() === PHP_SESSION_NONE) {
@@ -31,6 +32,11 @@ function user_login(): ?array {
 function wajib_login(): void {
     if (!user_login()) {
         redirect('login.php');
+    }
+    // Akun dengan password sementara (hasil reset petugas) wajib menggantinya dulu.
+    if (!empty($_SESSION['user']['wajib_ganti']) && basename($_SERVER['SCRIPT_NAME']) !== 'akun.php') {
+        set_flash('error', 'Ganti password sementara Anda terlebih dahulu.');
+        redirect($_SESSION['user']['role'] . '/akun.php');
     }
 }
 
@@ -116,4 +122,43 @@ function login_gagal(): void {
         $_SESSION['login_kunci'] = time() + 60;
         $_SESSION['login_gagal'] = 0;
     }
+}
+
+// ----- Helper bulan (untuk peringkat) & privasi NIM -----
+function nama_bulan(int $m): string {
+    $n = ['', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+    return $n[$m] ?? '';
+}
+// Validasi format 'YYYY-MM'; mengembalikan null jika tidak valid.
+function bulan_valid(string $b): ?string {
+    if (!preg_match('/^(\d{4})-(\d{2})$/', $b, $m)) return null;
+    $th = (int)$m[1]; $bl = (int)$m[2];
+    return ($th >= 2000 && $th <= 2100 && $bl >= 1 && $bl <= 12) ? $b : null;
+}
+function label_bulan(string $b): string {
+    [$th, $bl] = explode('-', $b);
+    return nama_bulan((int)$bl) . ' ' . $th;
+}
+// Menyamarkan NIM untuk tampilan ke sesama mahasiswa: 3337****01
+function samarkan_nim(string $nim): string {
+    $n = strlen($nim);
+    return $n <= 6 ? str_repeat('*', $n) : substr($nim, 0, 4) . str_repeat('*', $n - 6) . substr($nim, -2);
+}
+
+// ----- Helper denda & jatuh tempo -----
+function rupiah(int $n): string {
+    return 'Rp ' . number_format($n, 0, ',', '.');
+}
+// Jumlah hari terlambat: selisih $sampai (default hari ini) dengan jatuh tempo; minimal 0.
+function hari_terlambat(?string $jatuhTempo, ?string $sampai = null): int {
+    if (!$jatuhTempo) return 0;
+    $selisih = (strtotime($sampai ?? date('Y-m-d')) - strtotime($jatuhTempo)) / 86400;
+    return max(0, (int)round($selisih));
+}
+function hitung_denda(int $hari): int {
+    return $hari * DENDA_PER_HARI;
+}
+// Sisa hari menuju jatuh tempo (negatif jika sudah lewat).
+function sisa_hari(string $jatuhTempo): int {
+    return (int)round((strtotime($jatuhTempo) - strtotime(date('Y-m-d'))) / 86400);
 }
