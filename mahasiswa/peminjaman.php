@@ -22,7 +22,7 @@ $judul = 'Peminjaman';
 require __DIR__ . '/../includes/header.php';
 ?>
 <h1>Peminjaman</h1>
-<p class="sub">Stok berkurang setelah petugas menyetujui pengajuan Anda.</p>
+<p class="sub">Batas pinjam <?= LAMA_PINJAM_HARI ?> hari sejak disetujui. Denda <?= rupiah(DENDA_PER_HARI) ?> per hari keterlambatan.</p>
 <div class="card">
     <h2>Ajukan peminjaman</h2>
     <?php if ($punyaPending): ?>
@@ -53,12 +53,12 @@ require __DIR__ . '/../includes/header.php';
     <h2>Riwayat peminjaman</h2>
     <div class="table-wrap">
     <table>
-        <thead><tr><th>Tgl pinjam</th><th>Buku</th><th>Status pinjam</th><th>Pengembalian</th></tr></thead>
+        <thead><tr><th>Tgl pinjam</th><th>Buku</th><th>Jatuh tempo</th><th>Status pinjam</th><th>Pengembalian</th><th>Keterangan</th></tr></thead>
         <tbody>
-        <?php if (!$riwayat): ?><tr><td colspan="4" class="kosong">Belum ada peminjaman.</td></tr><?php endif; ?>
+        <?php if (!$riwayat): ?><tr><td colspan="6" class="kosong">Belum ada peminjaman.</td></tr><?php endif; ?>
         <?php foreach ($riwayat as $p): ?>
-            <tr><td><?= tgl($p['tanggal_pinjam']) ?></td><td><?= e($p['judul']) ?></td><td><?= badge($p['status']) ?></td>
-                <td><?= $p['status_kembali'] ? badge($p['status_kembali']) : '-' ?></td></tr>
+            <tr><td><?= tgl($p['tanggal_pinjam']) ?></td><td><?= e($p['judul']) ?></td><td><?= tgl($p['tanggal_jatuh_tempo'] ?? null) ?></td><td><?= badge($p['status']) ?></td>
+                <td><?= $p['status_kembali'] ? badge($p['status_kembali']) : '-' ?></td><td><?= peminjaman_keterangan($p) ?></td></tr>
         <?php endforeach; ?>
         </tbody>
     </table>
