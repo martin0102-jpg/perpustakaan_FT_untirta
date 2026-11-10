@@ -6,10 +6,10 @@
 // InfinityFree (di folder htdocs langsung): '' (kosong).
 define('BASE_URL', '/perpustakaan_FT_untirta');
 
-$DB_HOST = 'sql306.infinityfree.com';          // InfinityFree: sqlXXX.infinityfree.com
-$DB_USER = 'if0_43321194';               // InfinityFree: if0_XXXXXXXX
-$DB_PASS = 'HsQLLJSyZ1kMi';                   // InfinityFree: password akun hosting
-$DB_NAME = 'if0_43321194_perpus';   // InfinityFree: if0_XXXXXXXX_perpus_ft_untirta (sesuai panel)
+$DB_HOST = 'sql306.infinityfree****';          // InfinityFree: sqlXXX.infinityfree.com
+$DB_USER = 'if0_43321194*****';               // InfinityFree: if0_XXXXXXXX
+$DB_PASS = 'HsQLLJSyZ1kMi****';                   // InfinityFree: password akun hosting
+$DB_NAME = 'if0_43321194_perpus*****';   // InfinityFree: if0_XXXXXXXX_perpus_ft_untirta (sesuai panel)
 
 date_default_timezone_set('Asia/Jakarta');
 
